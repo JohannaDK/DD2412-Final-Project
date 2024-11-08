@@ -8,6 +8,7 @@ import torchvision.datasets as datasets
 from src.models.TST import *
 from src.models.VTST import *
 from src.models.WRN import *
+from src.models.CNN import *
 import torch.utils.data as data
 from argparse import ArgumentParser
 from torch.utils.data import DataLoader
@@ -98,6 +99,16 @@ for i in range(args.seeds_per_job):
     elif (args.dataset == "SVHN" or args.dataset =="CIFAR10" or args.dataset=="CIFAR100") and args.model=="VTST" and args.pretrained_qyx is not None:
         model = VTST(dataset=args.dataset, num_classes=num_classes, latent_dim=args.latent_dim, accelerator=args.accelerator, bound_qzx_var=True, pretrained_qyx=load_WRN_model(args.pretrained_qyx, dataset=args.dataset), separate_body=True)
     elif (args.dataset == "SVHN" or args.dataset =="CIFAR10" or args.dataset=="CIFAR100") and args.model=="VTST" and args.pretrained_qyx is None:
+        model = VTST(dataset=args.dataset, num_classes=num_classes, latent_dim=args.latent_dim, accelerator=args.accelerator, bound_qzx_var=True, pretrained_qyx=None, separate_body=True)
+    elif args.model=="CNN" and (args.dataset == "SVHN" or args.dataset =="CIFAR10" or args.dataset=="CIFAR100"):
+        model = CNN(num_classes=num_classes)
+    elif (args.dataset == "SVHN" or args.dataset =="CIFAR10" or args.dataset=="CIFAR100") and args.model=="TST_CNN" and args.pretrained_qyx is not None:
+        model = TST(dataset=args.dataset, num_classes=num_classes, latent_dim=args.latent_dim, accelerator=args.accelerator, pretrained_qyx=load_CNN_model(args.pretrained_qyx, dataset=args.dataset), separate_body=True)
+    elif (args.dataset == "SVHN" or args.dataset =="CIFAR10" or args.dataset=="CIFAR100") and args.model=="TST_CNN" and args.pretrained_qyx is None:
+        model = TST(dataset=args.dataset, num_classes=num_classes, latent_dim=args.latent_dim, accelerator=args.accelerator, pretrained_qyx=None, separate_body=True)
+    elif (args.dataset == "SVHN" or args.dataset =="CIFAR10" or args.dataset=="CIFAR100") and args.model=="VTST_CNN" and args.pretrained_qyx is not None:
+        model = VTST(dataset=args.dataset, num_classes=num_classes, latent_dim=args.latent_dim, accelerator=args.accelerator, bound_qzx_var=True, pretrained_qyx=load_CNN_model(args.pretrained_qyx, dataset=args.dataset), separate_body=True)
+    elif (args.dataset == "SVHN" or args.dataset =="CIFAR10" or args.dataset=="CIFAR100") and args.model=="VTST_CNN" and args.pretrained_qyx is None:
         model = VTST(dataset=args.dataset, num_classes=num_classes, latent_dim=args.latent_dim, accelerator=args.accelerator, bound_qzx_var=True, pretrained_qyx=None, separate_body=True)
     else:
         raise Exception("Oops, requested model does not exist for this specific dataset!")
