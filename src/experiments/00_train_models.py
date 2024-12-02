@@ -19,6 +19,9 @@ from src.utils.utils import *
 import torchvision.transforms as transforms
 from lightning.pytorch.callbacks import ModelCheckpoint
 
+#CHANGES
+from src.models.ResNet import ResNet50
+
 parser = ArgumentParser()
 parser.add_argument("--latent_dim", type=int, default=10)
 parser.add_argument("--seed", type=int, default=0)
@@ -91,6 +94,8 @@ for i in range(args.seeds_per_job):
 
     if args.model == "WRN" and (args.dataset == "SVHN" or args.dataset=="CIFAR100" or args.dataset=="CIFAR10"):
         model = WideResNet(num_classes=num_classes, depth=28, width=10, num_input_channels=3)
+    elif args.model == "ResNet50" and (args.dataset == "SVHN" or args.dataset=="CIFAR100" or args.dataset=="CIFAR10"):
+        model = ResNet50(num_classes=num_classes, pretrained=True)
     elif (args.dataset == "SVHN" or args.dataset =="CIFAR10" or args.dataset=="CIFAR100") and args.model=="TST" and args.pretrained_qyx is not None:
         model = TST(dataset=args.dataset, num_classes=num_classes, latent_dim=args.latent_dim, accelerator=args.accelerator, pretrained_qyx=load_WRN_model(args.pretrained_qyx, dataset=args.dataset), separate_body=True)
     elif (args.dataset == "SVHN" or args.dataset =="CIFAR10" or args.dataset=="CIFAR100") and args.model=="TST" and args.pretrained_qyx is None:
@@ -102,7 +107,7 @@ for i in range(args.seeds_per_job):
     else:
         raise Exception("Oops, requested model does not exist for this specific dataset!")
 
-    if args.model =="WRN":
+    if args.model =="WRN" or args.model == "ResNet50":
         lightning_module = lt_disc_models(model, num_classes)
     elif args.model == "TST":
         lightning_module = TS_Module(model, num_classes, device=args.accelerator, freeze_qyx=args.freeze_qyx, dataset=args.dataset)

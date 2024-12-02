@@ -2,10 +2,10 @@ nohup: ignoring input
 !!Evaluating model!!
 /opt/conda/lib/python3.10/site-packages/lightning/pytorch/utilities/parsing.py:197: UserWarning: Attribute 'model' is an instance of `nn.Module` and is already saved during checkpointing. It is recommended to ignore them using `self.save_hyperparameters(ignore=['model'])`.
   rank_zero_warn(
-Files already downloaded and verified
-Before temperature - NLL: 2.018, ECE: 0.181
-Optimal temperature: 1.473
-After temperature - NLL: 1.850, ECE: 0.037
+model_path experiment_results/CIFAR10_ResNet50/checkpoints/seed=1-epoch=05-valid_loss=0.542-model_name=ResNet50_CIFAR10_Base_seed1.ckpt
+Model_type ResNet50
+model_name ResNet50_CIFAR10_Base_seed1
+path ./experiment_results/CIFAR10_ResNet50/checkpoints/seed=1-epoch=05-valid_loss=0.542-model_name=ResNet50_CIFAR10_Base_seed1.ckpt
 Files already downloaded and verified
 Files already downloaded and verified
 Files already downloaded and verified
