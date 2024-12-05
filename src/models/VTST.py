@@ -6,7 +6,7 @@ from torch import flatten
 import torch.optim
 
 class VTST(nn.Module):
-    def __init__(self, dataset="MNIST", latent_dim=128, num_classes=10, separate_body=False, beta=0.01, pretrained_qyx = None, accelerator="cpu", bound_qzx_var=False, paper=None, simple_CNN=False, ViT_experiment=False):
+    def __init__(self, dataset="MNIST", latent_dim=128, num_classes=10, separate_body=False, beta=0.01, pretrained_qyx = None, accelerator="cpu", bound_qzx_var=False, paper=None, simple_CNN=False, ViT_experiment=False, ResNet50_experiment = False):
         super().__init__()
         self.latent_dim = latent_dim
         self.bound_qzx_var = bound_qzx_var
@@ -16,10 +16,10 @@ class VTST(nn.Module):
         else:
             self.separate_body = False
         if dataset == "CIFAR10" or self.separate_body:
-            self.qzx_body = construct_ClassYEncoderBody(pretrained_model=pretrained_qyx)
-        self.qzx_model = construct_ClassYEncoder(dataset, self.latent_dim)
+            self.qzx_body = construct_ClassYEncoderBody(pretrained_model=pretrained_qyx, ResNet50_experiment = ResNet50_experiment)
+        self.qzx_model = construct_ClassYEncoder(dataset, self.latent_dim, ResNet50_experiment = ResNet50_experiment)
         if self.bound_qzx_var:
-            self.qzx_var = construct_EncoderVar(dataset, self.latent_dim)
+            self.qzx_var = construct_EncoderVar(dataset, self.latent_dim, ResNet50_experiment = ResNet50_experiment)
 
         self.pyz = construct_LabelDecoder(dataset, self.latent_dim, num_classes=num_classes)
 
