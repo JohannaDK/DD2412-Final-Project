@@ -12,8 +12,22 @@ import torchvision.transforms as transforms
 import torch.utils.data as data
 from torchvision.datasets import MNIST, FashionMNIST, CIFAR10, SVHN, CIFAR100
 from src.models.TemperatureScaler import *
+from src.models.ResNet_new import *
 
 EVAL_PATH = "./experiment_results/robustness_evaluations/"
+
+def load_ResNet50_model(path, dataset="CIFAR10", map_location="cpu", clean_dict_keys=True):
+    if dataset.find("CIFAR100") != -1:
+        model = ResNet50(num_classes=100)
+    elif dataset.find("CIFAR10") != -1 or dataset.find("SVHN") != -1:
+        model = ResNet50(num_classes=10)
+    checkpoint = torch.load(path, map_location=map_location)
+    checkpoint_cleaned = OrderedDict()
+    for key in checkpoint['state_dict'].keys():
+        new_key = ".".join(key.split(".")[1:])
+        checkpoint_cleaned[new_key] = checkpoint['state_dict'][key]
+    model.load_state_dict(checkpoint_cleaned)
+    return model
 
 def load_WRN_model(path, dataset="CIFAR10", map_location="cpu", clean_dict_keys=True):
     if dataset.find("CIFAR100") != -1:
@@ -28,8 +42,11 @@ def load_WRN_model(path, dataset="CIFAR10", map_location="cpu", clean_dict_keys=
     model.load_state_dict(checkpoint_cleaned)
     return model
 
-def construct_ClassYEncoder(dataset, latent_dim):
-    return WRN2810Head(latent_dim)
+def construct_ClassYEncoder(dataset, latent_dim, ResNet50_experiment):
+    if ResNet50_experiment:
+        return ResNet50Head(latent_dim)
+    else:
+        return WRN2810Head(latent_dim)
 
 def construct_EncoderVar(dataset, latent_dim):
     return WRN2810VarHead(latent_dim)
@@ -37,19 +54,25 @@ def construct_EncoderVar(dataset, latent_dim):
 def construct_LabelDecoder(dataset, latent_dim, num_classes):
     return CIFAR10SimpelLabelDecoder(latent_dim, num_classes=num_classes)
 
-def construct_ClassYEncoderBody(pretrained_model=None):
+def construct_ClassYEncoderBody(pretrained_model=None, ResNet50_experiment = False):
     if pretrained_model is None:
-        return WRN2810Body(num_classes=10, depth=28, width=10, num_input_channels=3)
+        if ResNet50_experiment:
+            return ResNet50Body()
+        else:
+            return WRN2810Body(num_classes=10, depth=28, width=10, num_input_channels=3)
     else:
+        if ResNet50_experiment:
+            encoder_model = ResNet50Body()
+        else: 
+            encoder_model = WRN2810Body(num_classes=10, depth=28, width=10, num_input_channels=3)
+
         pretrained_dict =  pretrained_model.state_dict()
-        encoder_model = WRN2810Body(num_classes=10, depth=28, width=10, num_input_channels=3)
         encoder_dict = encoder_model.state_dict()
         pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in encoder_dict}
         encoder_dict.update(pretrained_dict)
         encoder_model.load_state_dict(encoder_dict)
         return encoder_model
         
-
 def load_model(name, path, device="cuda:0"):
     if name.find("VTST") != -1:
         return VTST_Module.load_from_checkpoint(path, map_location=device).model
