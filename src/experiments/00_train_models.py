@@ -22,7 +22,8 @@ from lightning.pytorch.callbacks import ModelCheckpoint
 #CHANGES
 #from src.models.ResNet import ResNet50
 from src.models.ResNet_new import *
-from src.models.EfficientNet import *
+#from src.models.EfficientNet import *
+from src.models.EfficientNet_new import EfficientNetB5
 
 parser = ArgumentParser()
 parser.add_argument("--latent_dim", type=int, default=10)
@@ -116,16 +117,27 @@ for i in range(args.seeds_per_job):
     elif (args.dataset == "SVHN" or args.dataset =="CIFAR10" or args.dataset=="CIFAR100") and args.model=="VTST_ResNet50" and args.pretrained_qyx is None:
         model = VTST(dataset=args.dataset, num_classes=num_classes, latent_dim=args.latent_dim, accelerator=args.accelerator, bound_qzx_var=True, pretrained_qyx=None, separate_body=True, ResNet50_experiment = True)
     #FOR EFFICIENTNET
+    #CREATE load_EfficientNet_model todo
     elif args.model == "EfficientNet" and (args.dataset == "SVHN" or args.dataset=="CIFAR100" or args.dataset=="CIFAR10"):
-        model = EfficientNetV2_M(num_classes)
+        #model = EfficientNetV2_M(num_classes)
+        #model = EfficientNetV2_S(num_classes)
+        model = EfficientNetB5(num_classes)
+    elif (args.dataset == "SVHN" or args.dataset =="CIFAR10" or args.dataset=="CIFAR100") and args.model=="TST_EfficientNet" and args.pretrained_qyx is not None:
+        model = TST(dataset=args.dataset, num_classes=num_classes, latent_dim=args.latent_dim, accelerator=args.accelerator, pretrained_qyx=load_EfficientNet_model(args.pretrained_qyx, dataset=args.dataset), separate_body=True, EfficientNet_experiment = True)
+    elif (args.dataset == "SVHN" or args.dataset =="CIFAR10" or args.dataset=="CIFAR100") and args.model=="TST_EfficientNet" and args.pretrained_qyx is None:
+        model = TST(dataset=args.dataset, num_classes=num_classes, latent_dim=args.latent_dim, accelerator=args.accelerator, pretrained_qyx=None, separate_body=True, EfficientNet_experiment = True)
+    elif (args.dataset == "SVHN" or args.dataset =="CIFAR10" or args.dataset=="CIFAR100") and args.model=="VTST_EfficientNet" and args.pretrained_qyx is not None:
+        model = VTST(dataset=args.dataset, num_classes=num_classes, latent_dim=args.latent_dim, accelerator=args.accelerator, bound_qzx_var=True, pretrained_qyx=load_EfficientNet_model(args.pretrained_qyx, dataset=args.dataset), separate_body=True, EfficientNet_experiment = True)
+    elif (args.dataset == "SVHN" or args.dataset =="CIFAR10" or args.dataset=="CIFAR100") and args.model=="VTST_EfficientNet" and args.pretrained_qyx is None:
+        model = VTST(dataset=args.dataset, num_classes=num_classes, latent_dim=args.latent_dim, accelerator=args.accelerator, bound_qzx_var=True, pretrained_qyx=None, separate_body=True, EfficientNet_experiment = True)
     else:
         raise Exception("Oops, requested model does not exist for this specific dataset!")
 
     if args.model =="WRN" or args.model == "ResNet50" or args.model == "EfficientNet":
         lightning_module = lt_disc_models(model, num_classes)
-    elif args.model == "TST" or args.model == "TST_ResNet50":
+    elif args.model == "TST" or args.model == "TST_ResNet50" or args.model == "TST_EfficientNet":
         lightning_module = TS_Module(model, num_classes, device=args.accelerator, freeze_qyx=args.freeze_qyx, dataset=args.dataset)
-    elif args.model == "VTST" or args.model == "VTST_ResNet50":
+    elif args.model == "VTST" or args.model == "VTST_ResNet50" or args.model == "VTST_EfficientNet":
         lightning_module = VTST_Module(model, num_classes, device=args.accelerator, freeze_qyx=args.freeze_qyx, dataset=args.dataset)
     else:
         raise Exception("Oops, requested model does not have an accompanying lightning module!")

@@ -13,8 +13,25 @@ import torch.utils.data as data
 from torchvision.datasets import MNIST, FashionMNIST, CIFAR10, SVHN, CIFAR100
 from src.models.TemperatureScaler import *
 from src.models.ResNet_new import *
+#from src.models.EfficientNet import *
+from src.models.EfficientNet_new import *
 
 EVAL_PATH = "./experiment_results/robustness_evaluations/"
+
+def load_EfficientNet_model(path, dataset="CIFAR10", map_location="cpu", clean_dict_keys=True):
+    if dataset.find("CIFAR100") != -1:
+        #model = EfficientNetV2_M(num_classes = 100)
+        model = EfficientNetB5(num_classes = 100)
+    elif dataset.find("CIFAR10") != -1 or dataset.find("SVHN") != -1:
+        #model = EfficientNetV2_M(num_classes = 10)
+        model = EfficientNetB5(num_classes = 10)
+    checkpoint = torch.load(path, map_location=map_location)
+    checkpoint_cleaned = OrderedDict()
+    for key in checkpoint['state_dict'].keys():
+        new_key = ".".join(key.split(".")[1:])
+        checkpoint_cleaned[new_key] = checkpoint['state_dict'][key]
+    model.load_state_dict(checkpoint_cleaned)
+    return model
 
 def load_ResNet50_model(path, dataset="CIFAR10", map_location="cpu", clean_dict_keys=True):
     if dataset.find("CIFAR100") != -1:
@@ -42,27 +59,38 @@ def load_WRN_model(path, dataset="CIFAR10", map_location="cpu", clean_dict_keys=
     model.load_state_dict(checkpoint_cleaned)
     return model
 
-def construct_ClassYEncoder(dataset, latent_dim, ResNet50_experiment):
+def construct_ClassYEncoder(dataset, latent_dim, ResNet50_experiment = False, EfficientNet_experiment = False):
     if ResNet50_experiment:
         return ResNet50Head(latent_dim)
+    elif EfficientNet_experiment:
+        return EfficientNetB5Head(latent_dim)
     else:
         return WRN2810Head(latent_dim)
 
-def construct_EncoderVar(dataset, latent_dim):
-    return WRN2810VarHead(latent_dim)
+def construct_EncoderVar(dataset, latent_dim, ResNet50_experiment = False, EfficientNet_experiment = False):
+    if ResNet50_experiment:
+        return ResNet50VarHead(latent_dim)
+    elif EfficientNet_experiment:
+        return EfficientNetB5VarHead(latent_dim)
+    else: 
+        return WRN2810VarHead(latent_dim)
 
 def construct_LabelDecoder(dataset, latent_dim, num_classes):
     return CIFAR10SimpelLabelDecoder(latent_dim, num_classes=num_classes)
 
-def construct_ClassYEncoderBody(pretrained_model=None, ResNet50_experiment = False):
+def construct_ClassYEncoderBody(pretrained_model=None, ResNet50_experiment = False, EfficientNet_experiment = False):
     if pretrained_model is None:
         if ResNet50_experiment:
             return ResNet50Body()
+        elif EfficientNet_experiment:
+            return EfficientNetB5Body() 
         else:
             return WRN2810Body(num_classes=10, depth=28, width=10, num_input_channels=3)
     else:
         if ResNet50_experiment:
             encoder_model = ResNet50Body()
+        elif EfficientNet_experiment:
+            encoder_model = EfficientNetB5Body()
         else: 
             encoder_model = WRN2810Body(num_classes=10, depth=28, width=10, num_input_channels=3)
 
@@ -81,6 +109,8 @@ def load_model(name, path, device="cuda:0"):
     elif name == "WRN":
          return lt_disc_models.load_from_checkpoint(path, map_location=device).model
     elif name == "ResNet50":
+         return lt_disc_models.load_from_checkpoint(path, map_location=device).model
+    elif name == "EfficientNet":
          return lt_disc_models.load_from_checkpoint(path, map_location=device).model
 
 
